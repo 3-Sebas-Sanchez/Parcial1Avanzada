@@ -9,5 +9,8 @@ package edu.udistrital.parcial1.servidor.control;
  * @author sebas
  */
 public class ControlPrincipalServidor {
+
+    public ControlPrincipalServidor() {
+    }
     
 }

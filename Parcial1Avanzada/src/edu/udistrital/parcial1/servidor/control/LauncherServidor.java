@@ -4,10 +4,14 @@
  */
 package edu.udistrital.parcial1.servidor.control;
 
+import edu.udistrital.parcial1.servidor.control.ControlPrincipalServidor;
+
 /**
  *
  * @author sebas
  */
 public class LauncherServidor {
-    
+    public static void main (String[] args){
+      new ControlPrincipalServidor();  
+    } 
 }

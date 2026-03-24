@@ -4,10 +4,13 @@
  */
 package edu.udistrital.parcial1.usuario.control;
 
+import edu.udistrital.parcial1.usuario.control.ControlPrincipalUsuario;
 /**
  *
  * @author sebas
  */
 public class LauncherUsuario {
-    
+    public static void main(String[] args){
+        new ControlPrincipalUsuario();
+    }
 }
