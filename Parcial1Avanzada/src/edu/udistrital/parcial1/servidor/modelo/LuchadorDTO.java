@@ -6,7 +6,7 @@ package edu.udistrital.parcial1.servidor.modelo;
 
 /**
  *
- * @author natha
+ * @author Nath
  */
 public class LuchadorDTO {
     
