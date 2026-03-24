@@ -6,7 +6,7 @@ package edu.udistrital.parcial1.servidor.modelo.Conexion;
 
 /**
  *
- * @author sebas
+ * @author Nath
  */
 public class ConexionProperties {
     
