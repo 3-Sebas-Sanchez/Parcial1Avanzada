@@ -10,6 +10,8 @@ import javax.swing.SwingUtilities;
 
 
 /**
+ * Controlador Principal que orquesta la comunicación entre la Vista,
+ * el Socket y la configuración.
  *
  * @author Nath
  */
@@ -31,36 +33,48 @@ public class ControlPrincipalUsuario {
         controlSocket = new ControlSocket(this);
         configDAO = new PropertiesDAO();
         // controlVista.mostrarVentana();
+        
+        //solicita al usuario cargar el archivo
+        cargarArchivoAlInicio();
     }
-
-
+    
     /**
-     * Solicita al usuario seleccionar el properties, carga la configuracion del
-     * socket y las categorias disponibles
+     * Carga el archivo de propiedades al iniciar la aplicación
+     * Muestra el JFileChooser antes de mostrar la ventana principal
      */
-    public void seleccionarProperties() {
-        archivoProperties = controlVista.seleccionar("Seleccione el archivo de configuracion del cliente: ");
+    private void cargarArchivoAlInicio() {
+        archivoProperties = controlVista.seleccionar("Seleccione el archivo de configuración (Usuario.properties)");
 
         if (archivoProperties != null) {
             try {
-                // Instanciamos el archivo físico 
+                // Instancia el archivo físico
                 configDAO.setArchivoProperties(new java.io.File(archivoProperties));
                 
-                // Le carga los datos a todo usando el caché del DAO
+                // Carga los datos usando el caché del DAO
                 configDAO.configurarConexionSocketDesdeArchivo();
                 
                 // Carga las categorías a la vista
-                cargarCategorias(); 
+                cargarCategorias();
                 
                 // Actualiza la etiqueta de ruta en la vista
                 controlVista.setRutaProperties(archivoProperties);
                 
+                // Ahora sí muestra la ventana principal
+                controlVista.mostrarVentana();
+                
                 // Informa al usuario que se cargó correctamente
-                controlVista.mostrarMensaje("Archivo de configuración cargado correctamente.");
+                controlVista.mostrarMensaje(" Archivo de configuración cargado correctamente.");
                 
             } catch (Exception e) {
-                controlVista.mostrarAdvertencia("Error al cargar el archivo properties: " + e.getMessage());
+                controlVista.mostrarAdvertencia("Error al cargar el archivo properties: " + e.getMessage() 
+                    + "\n\nIntenta nuevamente.");
+                // Intenta nuevamente
+                cargarArchivoAlInicio();
             }
+        } else {
+            // Si cancela, intenta nuevamente
+            controlVista.mostrarAdvertencia("Debe seleccionar un archivo para continuar.");
+            cargarArchivoAlInicio();
         }
     }
 

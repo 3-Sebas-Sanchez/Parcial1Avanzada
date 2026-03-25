@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Ventana Principal del Cliente (Rikishi)
+ * Ventana Principal del Cliente
  * Organiza todos los paneles de la interfaz gráfica
  *
  * @author Nath
@@ -40,7 +40,11 @@ public class VentanaUsuario extends JFrame {
         this.setSize(1000, 700);
         this.setLocationRelativeTo(null);
         this.setResizable(true);
-        this.setIconImage(new ImageIcon("sumo.png").getImage()); // Opcional
+        try {
+            this.setIconImage(new ImageIcon("sumo.png").getImage());
+        } catch (Exception e) {
+            // Si no encuentra el ícono, continúa sin él
+        }
     }
 
     /**
@@ -68,9 +72,6 @@ public class VentanaUsuario extends JFrame {
 
     // ===== GETTERS DE COMPONENTES =====
 
-    public JButton getBtnCargarArchivo() {
-        return panelCarga.getBtnCargarArchivo();
-    }
 
     public JLabel getLblRutaArchivo() {
         return panelCarga.getLblRutaArchivo();
@@ -112,10 +113,21 @@ public class VentanaUsuario extends JFrame {
 
     // ===== MÉTODOS DE DIÁLOGOS =====
 
-    public String abrirSelectorArchivo(String titulo) {
-        JFileChooser fileChooser = new JFileChooser();
+        public String abrirSelectorArchivo(String titulo) {
+        // Obtiene la ruta de la carpeta raíz del proyecto
+        String rutaProyecto = System.getProperty("user.dir");
+        
+        // Apuntamos específicamente a la carpeta "data" 
+        java.io.File carpetaData = new java.io.File(rutaProyecto, "data");
+        
+        //Le pasamos la carpeta al FileChooser para que arranque desde ahí
+        JFileChooser fileChooser = new JFileChooser(carpetaData);
+        
         fileChooser.setDialogTitle(titulo);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        // Filtro para que solo vea archivos .properties
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos Properties", "properties"));
         
         int resultado = fileChooser.showOpenDialog(this);
         if (resultado == JFileChooser.APPROVE_OPTION) {

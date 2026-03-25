@@ -181,19 +181,29 @@ public class VentanaServidor extends JFrame{
         cambiarGif(GIF_PELEA);
     }
  
-    /**
+/**
      * Abre un {@link JFileChooser} para que el usuario seleccione
      * un archivo {@code .properties}.
      * Este método vive en la Vista porque involucra un componente Swing.
+     * Obliga a iniciar la búsqueda desde la carpeta "data" del proyecto.
      *
      * @param titulo Título del diálogo selector
      * @return El {@link File} seleccionado, o {@code null} si el usuario canceló
      */
     public File seleccionarProperties(String titulo) {
-        JFileChooser chooser = new JFileChooser();
+        // Obtiene la ruta del proyecto actual
+        String rutaProyecto = System.getProperty("user.dir");
+        
+        // Apuntamos a la subcarpeta "data"
+        java.io.File carpetaData = new java.io.File(rutaProyecto, "data");
+        
+        //Le pasa el directorio inicial al FileChooser
+        JFileChooser chooser = new JFileChooser(carpetaData);
+        
         chooser.setDialogTitle(titulo);
-        chooser.setFileFilter(new FileNameExtensionFilter(
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
                 "Archivos de propiedades (*.properties)", "properties"));
+        
         int resultado = chooser.showOpenDialog(this);
         if (resultado == JFileChooser.APPROVE_OPTION) {
             return chooser.getSelectedFile();

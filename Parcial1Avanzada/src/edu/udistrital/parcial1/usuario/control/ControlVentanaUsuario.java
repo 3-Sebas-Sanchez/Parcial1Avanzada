@@ -7,7 +7,6 @@ package edu.udistrital.parcial1.usuario.control;
 import edu.udistrital.parcial1.usuario.vista.VentanaUsuario;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import javax.swing.JCheckBox;
 
 /**
@@ -36,14 +35,12 @@ public class ControlVentanaUsuario implements ActionListener {
      * Método que inicializa la ventana y conecta los listeners
      */
     private void inicializarVentana() {
-        // La ventana se encarga 
+        // Crear la ventana pero NO mostrarla aún
         this.ventana = new VentanaUsuario();
 
-        // Conecta los botones usando los getters de la vista
-        ventana.getBtnCargarArchivo().addActionListener(this);
+        // Conectar el botón de pelear
         ventana.getBtnPelear().addActionListener(this);
 
-        ventana.setVisible(true);
     }
 
     /**
@@ -55,12 +52,8 @@ public class ControlVentanaUsuario implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
 
-        // Si presionó el botón de cargar archivo
-        if (src == ventana.getBtnCargarArchivo()) {
-            cPrincipal.seleccionarProperties();
-        } 
         // Si presionó el botón de pelear
-        else if (src == ventana.getBtnPelear()) {
+        if (src == ventana.getBtnPelear()) {
             enviarDatosAlPrincipal();
         }
     }
@@ -124,6 +117,13 @@ public class ControlVentanaUsuario implements ActionListener {
      */
     public void cargarKimaritesPorCategoria(String[] kimarites) {
         ventana.llenarTecnicasEnUltimaPestana(kimarites);
+    }
+    
+    /**
+     * Muestra la ventana principal
+     */
+    public void mostrarVentana() {
+        ventana.setVisible(true);
     }
 
     // --- Métodos de delegación de mensajes ---

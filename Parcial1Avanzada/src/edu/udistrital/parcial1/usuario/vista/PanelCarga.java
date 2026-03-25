@@ -9,15 +9,14 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 /**
- * Panel de Configuración - Carga del archivo de propiedades
- * Ubicación: Norte (Top) de la ventana
+ * Panel que  Muestra la ruta del archivo de propiedades cargado
  *
  * @author Nath
  */
 public class PanelCarga extends JPanel {
 
-    private JButton btnCargarArchivo;
     private JLabel lblRutaArchivo;
+    private JLabel lblEstado;
 
     /**
      * Constructor que inicializa el panel con sus componentes
@@ -31,41 +30,32 @@ public class PanelCarga extends JPanel {
      */
     private void inicializarComponentes() {
         // Configurar el layout
-        this.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        
-        // Configurar el borde con título
-        TitledBorder borde = new TitledBorder("Carga Kimarites");
-        borde.setTitleFont(new Font("Arial", Font.BOLD, 12));
-        this.setBorder(borde);
+        this.setLayout(new BorderLayout(10, 10));
+        this.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
         // Configurar el fondo
         this.setBackground(new Color(240, 248, 255)); // Alice Blue
 
-        // Crear el botón de cargar archivo
-        btnCargarArchivo = new JButton(" Cargar Archivo de Tecnicas");
-        btnCargarArchivo.setFont(new Font("Arial", Font.BOLD, 12));
-        btnCargarArchivo.setBackground(new Color(65, 105, 225)); // Royal Blue
-        btnCargarArchivo.setForeground(Color.WHITE);
-        btnCargarArchivo.setFocusPainted(false);
-        btnCargarArchivo.setPreferredSize(new Dimension(200, 35));
-        btnCargarArchivo.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Crear la etiqueta de ruta
-        lblRutaArchivo = new JLabel("No se ha cargado archivo");
-        lblRutaArchivo.setFont(new Font("Arial", Font.ITALIC, 11));
-        lblRutaArchivo.setForeground(new Color(70, 70, 70));
+        // ===== ETIQUETA DE ESTADO =====
+        lblEstado = new JLabel(" Archivo de Properties Cargado:");
+        lblEstado.setFont(new Font("Arial", Font.BOLD, 12));
+        lblEstado.setForeground(new Color(25, 25, 112)); // Midnight Blue
+        this.add(lblEstado, BorderLayout.WEST);
 
-        // Agregar componentes al panel
-        this.add(btnCargarArchivo);
-        this.add(lblRutaArchivo);
-    }
+        // ===== ETIQUETA DE RUTA =====
+        lblRutaArchivo = new JLabel("Esperando selección de archivo...");
+        lblRutaArchivo.setFont(new Font("Courier New", Font.PLAIN, 11));
+        lblRutaArchivo.setForeground(new Color(34, 139, 34)); // Forest Green
+        lblRutaArchivo.setBorder(BorderFactory.createLineBorder(new Color(169, 169, 169)));
+        lblRutaArchivo.setOpaque(true);
+        lblRutaArchivo.setBackground(new Color(255, 255, 255));
+        lblRutaArchivo.setHorizontalAlignment(SwingConstants.LEFT);
+        lblRutaArchivo.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(169, 169, 169)),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
 
-    /**
-     * Retorna el botón de cargar archivo
-     * @return JButton btnCargarArchivo
-     */
-    public JButton getBtnCargarArchivo() {
-        return btnCargarArchivo;
+        this.add(lblRutaArchivo, BorderLayout.CENTER);
     }
 
     /**
@@ -74,5 +64,19 @@ public class PanelCarga extends JPanel {
      */
     public JLabel getLblRutaArchivo() {
         return lblRutaArchivo;
+    }
+
+    /**
+     * Actualiza la ruta mostrada en el panel
+     * @param ruta Nueva ruta a mostrar
+     */
+    public void actualizarRuta(String ruta) {
+        if (ruta != null && !ruta.isEmpty()) {
+            lblRutaArchivo.setText(ruta);
+            lblRutaArchivo.setForeground(new Color(34, 139, 34)); // Verde
+        } else {
+            lblRutaArchivo.setText("No se ha cargado archivo");
+            lblRutaArchivo.setForeground(new Color(178, 34, 34)); // Rojo
+        }
     }
 }
