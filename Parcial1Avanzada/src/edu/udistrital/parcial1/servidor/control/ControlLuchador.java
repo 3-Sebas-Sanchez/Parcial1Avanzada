@@ -2,32 +2,19 @@ package edu.udistrital.parcial1.servidor.control;
 
 import edu.udistrital.parcial1.servidor.modelo.DAO.LuchadorDAO;
 import edu.udistrital.parcial1.servidor.modelo.LuchadorDTO;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author sebas
- */
 public class ControlLuchador {
 
-    // Referencia al controlador principal.
-    private ControlPrincipalServidor cPrincipal;
+    private final ControlPrincipalServidor cPrincipal;
+    private final LuchadorDAO luchadorDAO;
+    private final List<ParHilo> participantes;
 
-    // DAO para operaciones de persistencia de luchadores en BD.
-    private LuchadorDAO luchadorDAO;
+    private static final int MAX_LUCHADORES = 6;
 
-    // Lista de participantes registrados (DTO + hilo de atención).
-    private List<ParHilo> participantes;
+    private boolean torneoIniciado = false;
 
-    // Número mínimo de luchadores para poder iniciar los combates.
-    static final int MINIMO_LUCHADORES = 6;
-
-    /**
-     * Constructor del controlador de luchadores.
-     *
-     * @param cPrincipal Referencia al controlador principal del servidor
-     */
     public ControlLuchador(ControlPrincipalServidor cPrincipal) {
         this.cPrincipal = cPrincipal;
         this.luchadorDAO = new LuchadorDAO();
@@ -35,56 +22,45 @@ public class ControlLuchador {
     }
 
     /**
-     * Registra un luchador y su hilo en la lista de participantes.
-     * Si el cupo de {@value #MINIMO_LUCHADORES} ya está completo, rechaza al
-     * nuevo participante notificándole con PERDISTE como señal de rechazo.
-     * Cuando se alcanza exactamente el mínimo requerido, cierra el
-     * {@link java.net.ServerSocket} para no aceptar más conexiones y delega
-     * al {@link ControlDohyo} para que inicie la secuencia de combates.
-     *
-     * @param luchador DTO del luchador recién guardado en BD
-     * @param hilo     Hilo que atiende al cliente de ese luchador
+     * Intenta registrar al luchador en la lista del torneo.
+     * @return true si fue aceptado, false si el torneo ya está lleno/iniciado.
      */
-    public synchronized void agregarLuchador(LuchadorDTO luchador, ControlHilo hilo) {
-        // Rechazar si el cupo ya estaba lleno antes de este registro
-        if (participantes.size() >= MINIMO_LUCHADORES) {
-            hilo.notificarResultado(false);
-            cPrincipal.getControlVentanaServidor().mostrarMensaje(
-                    "Luchador rechazado (cupo lleno): " + luchador.getNombre());
-            return;
+    public synchronized boolean intentarRegistrarParticipante(LuchadorDTO luchador, ControlHilo hilo) {
+
+        // Si ya inició o ya está lleno, NO aceptar
+        if (torneoIniciado || participantes.size() >= MAX_LUCHADORES) {
+            return false;
         }
 
         participantes.add(new ParHilo(luchador, hilo));
+
         cPrincipal.getControlVentanaServidor().mostrarMensaje(
-                "Luchadores registrados: " + participantes.size()
-                + " / " + MINIMO_LUCHADORES);
+                "Luchadores registrados: " + participantes.size() + " / " + MAX_LUCHADORES);
 
-        if (participantes.size() == MINIMO_LUCHADORES) {
-            // Cerrar el ServerSocket: ya no se aceptan más luchadores
-            cPrincipal.cerrarServerSocket();
+        // Si acabamos de llegar a 6, iniciar torneo
+        if (participantes.size() == MAX_LUCHADORES) {
+            torneoIniciado = true;
 
-            // Delegar la lógica del combate al ControlDohyo
+            cPrincipal.getControlVentanaServidor().mostrarMensaje(
+                    "🏮 Cupo completo (" + MAX_LUCHADORES + "). Iniciando torneo...");
+
+            // IMPORTANTÍSIMO: cerrar el ServerSocket para que NO acepte más
+            cPrincipal.detenerAceptacionDeClientes();
+
             ControlDohyo dohyo = new ControlDohyo(cPrincipal, luchadorDAO);
             List<ParHilo> copia = new ArrayList<>(participantes);
+
             new Thread(() -> dohyo.iniciarCombates(copia)).start();
         }
+
+        return true;
     }
 
-    /**
-     * Obtiene la lista actual de participantes registrados.
-     *
-     * @return Lista de {@link ParHilo}
-     */
-    public List<ParHilo> getParticipantes() {
-        return participantes;
+    public synchronized boolean isTorneoIniciado() {
+        return torneoIniciado;
     }
 
-    /**
-     * Obtiene el DAO de luchadores.
-     *
-     * @return {@link LuchadorDAO}
-     */
-    public LuchadorDAO getLuchadorDAO() {
-        return luchadorDAO;
+    public synchronized int getCupoActual() {
+        return participantes.size();
     }
 }
