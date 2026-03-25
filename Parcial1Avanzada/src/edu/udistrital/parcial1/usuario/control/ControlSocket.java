@@ -33,7 +33,7 @@ public class ControlSocket {
     /**
      * Constructor que recibe la inyeccion del control Principal
      *
-     * @param cGeneral Control General
+     * @param cGeneral Control principal
      */
     public ControlSocket(ControlPrincipalUsuario cGeneral) {
         this.cPrincipal = cGeneral;
