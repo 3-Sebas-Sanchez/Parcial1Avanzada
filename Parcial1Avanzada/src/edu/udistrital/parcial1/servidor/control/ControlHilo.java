@@ -54,38 +54,53 @@ public class ControlHilo implements Runnable{
     @Override
     public void run() {
         try {
-            input = new DataInputStream(socket.getInputStream());
+            input  = new DataInputStream(socket.getInputStream());
             output = new DataOutputStream(socket.getOutputStream());
  
-            // 1. Recibir datos del luchador
-            String nombre = input.readUTF();
-            double peso = input.readDouble();
+            // ── Paso 1: Handshake PING / PONG ────────────────────────
+            String ping = input.readUTF();
+            if ("PING".equalsIgnoreCase(ping)) {
+                output.writeUTF("PONG");
+                output.flush();
+            }
  
-            // Recibir cantidad de kimarites seleccionados
+            // ── Paso 2: Esperar cabecera NUEVO_LUCHADOR ───────────────
+            String cabecera = input.readUTF();
+            if (!"NUEVO_LUCHADOR".equalsIgnoreCase(cabecera)) {
+                output.writeUTF("ERROR_PROTOCOLO");
+                output.flush();
+                return;
+            }
+ 
+            // ── Paso 3: Leer datos del luchador ───────────────────────
+            String nombre          = input.readUTF();
+            double peso            = input.readDouble();
+            int    combatesGanados = input.readInt();   // el cliente también envía combates
+ 
             int cantidadKimarites = input.readInt();
             String[] kimarites = new String[cantidadKimarites];
             for (int i = 0; i < cantidadKimarites; i++) {
                 kimarites[i] = input.readUTF();
             }
  
-            //2. Crear DTO y guardar en BD
-            luchador = new LuchadorDTO(nombre, peso, 0, kimarites);
+            // ── Paso 4: Crear DTO y guardar en BD ─────────────────────
+            luchador = new LuchadorDTO(nombre, peso, combatesGanados, kimarites);
             boolean guardado = luchadorDAO.insertar(luchador);
  
             if (guardado) {
-                // Confirmar al cliente que fue registrado
                 output.writeUTF("REGISTRADO");
                 output.flush();
  
                 cPrincipalServidor.getControlVentanaServidor()
                         .mostrarMensaje("Luchador registrado: " + nombre
                                 + " (id=" + luchador.getIdLuchador() + ")");
+                cPrincipalServidor.getControlVentanaServidor()
+                        .agregarLuchadorLista(nombre + " | " + peso + " kg");
  
-                // Notificar al ControlLuchador para que lo agregue a la lista de participantes
+                // Agregar a la lista de participantes — puede disparar los combates
                 cPrincipalServidor.getControlLuchador().agregarLuchador(luchador, this);
  
-                //3. Esperar resultado del combate 
-                // El hilo queda bloqueado hasta que ControlLuchador llame a notificarResultado()
+                // ── Paso 5: Esperar resultado del combate ──────────────
                 synchronized (this) {
                     wait();
                 }
