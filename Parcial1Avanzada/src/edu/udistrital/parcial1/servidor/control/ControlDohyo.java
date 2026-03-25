@@ -74,7 +74,7 @@ public class ControlDohyo {
 
         } catch (IOException e) {
             cPrincipal.getControlVentanaServidor().mostrarMensaje(
-                    "Error con el archivo de resultados: " + e.getMessage());
+                    "❌ Error con el archivo de resultados: " + e.getMessage());
         }
     }
 
@@ -86,7 +86,7 @@ public class ControlDohyo {
      * @param par1 Primer participante
      * @param par2 Segundo participante
      * @param raf  Archivo de acceso aleatorio para registrar resultados
-     * @return El {@link ParLuchadorHilo} del ganador
+     * @return El {@link ParHilo} del ganador
      * @throws IOException Si ocurre un error al escribir en el archivo
      */
     private ParHilo combatir(ParHilo par1, ParHilo par2,
@@ -102,7 +102,8 @@ public class ControlDohyo {
         l2.setDentroDelDohyo(true);
 
         cPrincipal.getControlVentanaServidor().mostrarMensaje(
-                "COMBATE: " + l1.getNombre() + " vs " + l2.getNombre());
+                "\n⚔️  COMBATE: " + l1.getNombre() + " vs " + l2.getNombre());
+        cPrincipal.getControlVentanaServidor().mostrarGifPelea();
 
         // Bucle de turnos hasta que alguien salga del Dohyō
         while (l1.isDentroDelDohyo() && l2.isDentroDelDohyo()) {
@@ -137,7 +138,7 @@ public class ControlDohyo {
                 ganador.getLuchador().getCombatesGanados() + 1);
 
         cPrincipal.getControlVentanaServidor().mostrarMensaje(
-                "GANADOR: " + ganador.getLuchador().getNombre()
+                "🏆 GANADOR: " + ganador.getLuchador().getNombre()
                 + " | Victorias: " + ganador.getLuchador().getCombatesGanados());
 
         // Persistir en archivo de acceso aleatorio
@@ -202,7 +203,7 @@ public class ControlDohyo {
 
         raf.seek(raf.length());
 
-        String resultado = gano ? "GANO" : "PERDIO";
+        String resultado = gano ? "GANÓ" : "PERDIÓ";
         String registro = String.format("%-30s%-10.2f%-5d%-10s",
                 luchador.getNombre(),
                 luchador.getPeso(),
@@ -228,12 +229,18 @@ public class ControlDohyo {
     private void mostrarArchivoResultados(RandomAccessFile raf) throws IOException {
         raf.seek(0);
         cPrincipal.getControlVentanaServidor().mostrarMensaje(
-                "\n RESULTADOS FINALES");
+                "\n════════════════════════════════════════════════════");
+        cPrincipal.getControlVentanaServidor().mostrarMensaje(
+                "📊 RESULTADOS FINALES DEL TORNEO");
+        cPrincipal.getControlVentanaServidor().mostrarMensaje(
+                "════════════════════════════════════════════════════");
+        
         while (raf.getFilePointer() < raf.length()) {
             String linea = raf.readUTF().trim();
             System.out.println(linea);
             cPrincipal.getControlVentanaServidor().mostrarMensaje(linea);
         }
+        
         cPrincipal.getControlVentanaServidor().mostrarGifInicio();
     }
 }

@@ -9,17 +9,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Properties;
 
-/**
- * @author sebas
- */
 public class ControlPrincipalServidor {
 
-    /** Controlador encargado de la lógica de los luchadores y combates. */
     private ControlLuchador controlLuchador;
-
-    /** Controlador encargado de la ventana y eventos de la interfaz del servidor. */
     private ControlVentanaServidor controlVentanaServidor;
 
+    // Guardamos el ServerSocket para poder cerrarlo al llegar a 6
+    private volatile ServerSocket serverSocket;
 
     public ControlPrincipalServidor() {
         this.controlLuchador = new ControlLuchador(this);
@@ -28,28 +24,21 @@ public class ControlPrincipalServidor {
         iniciarServidorSocket();
     }
 
-    /**
-     * Delega a la Vista la apertura del selector de archivo, luego
-     * extrae del .properties las credenciales de BD y el puerto del servidor.
-     */
     private void seleccionarProperties() {
         File archivo = controlVentanaServidor.seleccionarProperties(
                 "Seleccione el archivo Servidor.properties");
- 
+
         if (archivo == null) {
             controlVentanaServidor.mostrarMensaje(
                     "No se seleccionó archivo de configuración. Cerrando...");
             System.exit(0);
         }
 
-        // Leer propiedades a través de ConexionProperties (Modelo)
         ConexionProperties cnxProps = new ConexionProperties(archivo);
         Properties props = cnxProps.conexion();
 
-        // Cargar credenciales de BD desde el mismo archivo
         ConexionBaseDeDatos.cargarCredenciales(archivo.getAbsolutePath());
 
-        // Leer el puerto desde el .properties — nunca hardcodeado
         String puertoStr = props.getProperty("servidor.puerto");
         if (puertoStr == null || puertoStr.trim().isEmpty()) {
             controlVentanaServidor.mostrarMensaje(
@@ -64,31 +53,27 @@ public class ControlPrincipalServidor {
                 "Configuración cargada. Servidor en puerto: " + puerto);
     }
 
-    /**
-     * Lanza el ciclo de aceptación de conexiones en un hilo separado.
-     * Por cada cliente que se conecta crea un {@link ControlHilo} en su propio hilo.
-     */
     private void iniciarServidorSocket() {
         Thread hiloServidor = new Thread(() -> {
             try {
-                ServerSocket ss = ConexionServerSocket.conexion();
+                serverSocket = ConexionServerSocket.conexion();
                 controlVentanaServidor.mostrarMensaje(
                         "Servidor escuchando en puerto " + ConexionServerSocket.getPuerto());
 
-                while (true) {
-                    Socket clienteSocket = ss.accept();
+                while (!serverSocket.isClosed()) {
+                    Socket clienteSocket = serverSocket.accept();
+
                     controlVentanaServidor.mostrarMensaje(
                             "Cliente conectado: "
                             + clienteSocket.getInetAddress().getHostAddress());
 
-                    // Crear hilo de atención independiente para este cliente
                     ControlHilo hilo = new ControlHilo(clienteSocket, this);
                     new Thread(hilo).start();
                 }
 
             } catch (Exception e) {
                 controlVentanaServidor.mostrarMensaje(
-                        "ServerSocket cerrado: " + e.getMessage());
+                        "Servidor dejó de aceptar clientes: " + e.getMessage());
             }
         });
 
@@ -97,19 +82,23 @@ public class ControlPrincipalServidor {
     }
 
     /**
-     * Obtiene el controlador de luchadores y combates.
-     *
-     * @return {@link ControlLuchador}
+     * Se llama cuando ya hay 6 luchadores: cierra el ServerSocket.
      */
+    public void detenerAceptacionDeClientes() {
+        try {
+            controlVentanaServidor.mostrarMensaje("⛔ Cupo lleno: cerrando accept() del servidor...");
+            ConexionServerSocket.cerrar(); // cierra el singleton
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     public ControlLuchador getControlLuchador() {
         return controlLuchador;
     }
 
-    /**
-     * Obtiene el controlador de la ventana del servidor.
-     *
-     * @return {@link ControlVentanaServidor}
-     */
     public ControlVentanaServidor getControlVentanaServidor() {
         return controlVentanaServidor;
     }
