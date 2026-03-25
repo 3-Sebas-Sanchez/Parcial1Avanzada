@@ -171,23 +171,51 @@ public class ControlPrincipalUsuario {
             new Thread(() -> {
                 try {
                     // Se queda esperando la respuesta del servidor en segundo plano
-                    String resultado = controlSocket.leerUTF(); 
+                    String resultado = controlSocket.leerUTF();
                     
-                    // actualizamos la Vista
-                    SwingUtilities.invokeLater(() -> {
-                        controlVista.mostrarResultado(resultado);
-                        controlSocket.cerrar(); // Desconectamos al terminar
-                        
-                        // Informamos al usuario que la aplicación se cerrará sola
-                        controlVista.mostrarMensaje("El combate ha finalizado. La aplicación se cerrará automáticamente.");
-                        
-                        // Configuramos un temporizador de 5000 milisegundos (5 segundos)
-                        Timer temporizador = new Timer(5000, e -> {
-                            System.exit(0); // Apaga la máquina virtual y cierra el programa
+                    // Procesar la respuesta del servidor
+                    if ("REGISTRADO".equalsIgnoreCase(resultado)) {
+                        // El luchador fue registrado, ahora esperar el combate
+                        SwingUtilities.invokeLater(() -> {
+                            controlVista.mostrarMensaje("¡Luchador registrado en el Dohyō!\n\nEsperando el combate...");
                         });
-                        temporizador.setRepeats(false); // Para que solo se ejecute una vez
-                        temporizador.start(); // Iniciamos el conteo
-                    });
+                        
+                        // Esperar la respuesta del combate
+                        String resultadoCombate = controlSocket.leerUTF();
+                        
+                        // Mostrar el resultado del combate
+                        SwingUtilities.invokeLater(() -> {
+                            String mensaje;
+                            if ("GANASTE".equalsIgnoreCase(resultadoCombate)) {
+                                mensaje = "¡¡¡ GANASTE !!! \n\n¡Felicidades, " + nombre + "!\nFuiste victorious en el Dohyō.";
+                            } else if ("PERDISTE".equalsIgnoreCase(resultadoCombate)) {
+                                mensaje = " PERDISTE \n\n" + nombre + ", fuiste sacado del Dohyō.\n¡Sigue entrenando!";
+                            } else if ("TORNEO_INICIADO".equalsIgnoreCase(resultadoCombate)) {
+                                mensaje = " TORNEO EN PROGRESO \n\nLllegaste tarde.\nEl torneo ya ha iniciado con 6 luchadores.\nIntenta de nuevo en el próximo torneo.";
+                            } else {
+                                mensaje = "RESULTADO: " + resultadoCombate;
+                            }
+                            
+                            controlVista.mostrarResultado(mensaje);
+                            controlSocket.cerrar();
+                            
+                            // Aquí es donde se cierra después de mostrar el resultado
+                            controlVista.mostrarMensaje("La aplicación se cerrará en 3 segundos...");
+                            
+                            // Temporizador de 3 segundos antes de cerrar
+                            Timer temporizador = new Timer(3000, e -> {
+                                System.exit(0);
+                            });
+                            temporizador.setRepeats(false);
+                            temporizador.start();
+                        });
+                    } else {
+                        // Error en el registro
+                        SwingUtilities.invokeLater(() -> {
+                            controlVista.mostrarAdvertencia("❌ Error: " + resultado);
+                            controlSocket.cerrar();
+                        });
+                    }
                     
                 } catch (Exception e) {
                     SwingUtilities.invokeLater(() -> 
