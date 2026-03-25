@@ -20,6 +20,13 @@ public class ControlPrincipalServidor {
     /** Controlador encargado de la ventana y eventos de la interfaz del servidor. */
     private ControlVentanaServidor controlVentanaServidor;
 
+    /**
+     * Referencia al ServerSocket activo.
+     * Se guarda para poder cerrarlo en cuanto se completen los
+     * {@value ControlLuchador#MINIMO_LUCHADORES} luchadores requeridos.
+     */
+    private ServerSocket serverSocket;
+
 
     public ControlPrincipalServidor() {
         this.controlLuchador = new ControlLuchador(this);
@@ -71,12 +78,14 @@ public class ControlPrincipalServidor {
     private void iniciarServidorSocket() {
         Thread hiloServidor = new Thread(() -> {
             try {
-                ServerSocket ss = ConexionServerSocket.conexion();
+                serverSocket = ConexionServerSocket.conexion();
                 controlVentanaServidor.mostrarMensaje(
                         "Servidor escuchando en puerto " + ConexionServerSocket.getPuerto());
 
-                while (true) {
-                    Socket clienteSocket = ss.accept();
+                // El bucle termina cuando cerrarServerSocket() cierra el ServerSocket
+                // (accept() lanza SocketException y salimos limpiamente).
+                while (!serverSocket.isClosed()) {
+                    Socket clienteSocket = serverSocket.accept();
                     controlVentanaServidor.mostrarMensaje(
                             "Cliente conectado: "
                             + clienteSocket.getInetAddress().getHostAddress());
@@ -87,13 +96,32 @@ public class ControlPrincipalServidor {
                 }
 
             } catch (Exception e) {
+                // Excepción esperada al cerrar el ServerSocket con cerrarServerSocket()
                 controlVentanaServidor.mostrarMensaje(
-                        "ServerSocket cerrado: " + e.getMessage());
+                        "Servidor dejó de aceptar conexiones: " + e.getMessage());
             }
         });
 
         hiloServidor.setDaemon(true);
         hiloServidor.start();
+    }
+
+    /**
+     * Cierra el {@link ServerSocket} para que el servidor deje de aceptar
+     * nuevas conexiones. Se invoca desde {@link ControlLuchador} en cuanto
+     * se completa el cupo de luchadores requeridos.
+     */
+    public void cerrarServerSocket() {
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+                controlVentanaServidor.mostrarMensaje(
+                        "Cupo completo. El servidor ya no acepta más luchadores.");
+            }
+        } catch (Exception e) {
+            controlVentanaServidor.mostrarMensaje(
+                    "Error al cerrar ServerSocket: " + e.getMessage());
+        }
     }
 
     /**
