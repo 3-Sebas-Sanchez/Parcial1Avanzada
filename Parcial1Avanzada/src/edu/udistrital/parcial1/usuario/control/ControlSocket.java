@@ -21,6 +21,7 @@ import java.net.Socket;
  *
  * @author Nath
  */
+
 public class ControlSocket {
     
     // Inyección de dependencia para comunicarse de vuelta con la Vista
