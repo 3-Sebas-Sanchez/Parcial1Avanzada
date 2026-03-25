@@ -26,6 +26,7 @@ public class PanelConectar extends JPanel {
         inicializarComponentes();
     }
 
+    
     /**
      * Inicializa todos los componentes visuales del panel
      */
